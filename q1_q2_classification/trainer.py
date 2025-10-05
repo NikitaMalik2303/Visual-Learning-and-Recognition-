@@ -53,7 +53,13 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
             # Function Outputs:
             #   - `output`: Computed loss, a single floating point number
             ##################################################################
-            loss = 0
+
+            x = output
+            y = target
+            # Simplifying the binary cross entropy loss formula to avoid overflow and underflow
+            loss = torch.clamp(x, 0) + torch.log1p(torch.exp(-torch.abs(x))) -x*y
+            loss = loss*wgt
+            loss = loss.mean()
             ##################################################################
             #                          END OF YOUR CODE                      #
             ##################################################################
