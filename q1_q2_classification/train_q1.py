@@ -20,7 +20,7 @@ if __name__ == "__main__":
     ##################################################################
 
     args = ARGS(
-        epochs=5,
+        epochs=10,
         inp_size=64,
         use_cuda=True,
         val_every=70,

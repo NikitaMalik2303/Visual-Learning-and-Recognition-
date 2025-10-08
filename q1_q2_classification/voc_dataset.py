@@ -97,10 +97,11 @@ class VOCDataset(Dataset):
         # change and you will have to write the correct value of `flat_dim`
         # in line 46 in simple_cnn.py
         ######################################################################
-        if self.split == "train": 
+        if self.split == "trainval": 
             return [
                 transforms.RandomHorizontalFlip(), 
-                transforms.RandomRotation(10), 
+                transforms.RandomVerticalFlip(),
+                transforms.ColorJitter(brightness=0.3, saturation=0.1, contrast=0.1),
                 transforms.RandomResizedCrop(self.size)
             ]
         else:
@@ -125,8 +126,8 @@ class VOCDataset(Dataset):
         img = Image.open(fpath)
 
         trans = transforms.Compose([
-            transforms.Resize(self.size),
-            *self.get_random_augmentations(),
+            transforms.Resize((self.size, self.size)),
+            # *self.get_random_augmentations(),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.457, 0.407], std=[0.229, 0.224, 0.225]),
         ])

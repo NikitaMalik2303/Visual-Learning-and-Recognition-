@@ -435,24 +435,34 @@ class FCOS(nn.Module):
         # positions to zero.
         ######################################################################
         # Feel free to delete this line: (but keep variable names same)
+
+        pred_cls_logits = pred_cls_logits.reshape(pred_cls_logits.shape[0]*pred_cls_logits.shape[1],-1)
+        pred_boxreg_deltas = pred_boxreg_deltas.reshape(pred_cls_logits.shape[0]*pred_cls_logits.shape[1],-1)
+        pred_ctr_logits = pred_ctr_logits.reshape(pred_cls_logits.shape[0]*pred_cls_logits.shape[1],-1)
+        matched_gt_boxes = matched_gt_boxes.reshape(pred_cls_logits.shape[0]*pred_cls_logits.shape[1],-1)
+
+        cls_targets = torch.zeros(pred_cls_logits.shape, device=pred_cls_logits.device)
+        gt_class_ids = matched_gt_boxes[:,-1]
+
+        for i in range(gt_class_ids.shape[0]):
+            if(gt_class_ids[i]!=-1):
+                cls_targets[i,int(gt_class_ids[i])] = 1
+
+        loss_cls = sigmoid_focal_loss(pred_cls_logits, cls_targets, alpha=0.25, gamma=2.0, reduction="none").sum(dim=1)
         
-        mask = matched_gt_boxes[:,:,4]!=-1
-
-        gt_classes = matched_gt_boxes[:, :, 4].clamp(min=0)
-        target_classes = F.one_hot(gt_classes.long(), num_classes=self.num_classes + 1)[..., :-1].float()
-        loss_cls = sigmoid_focal_loss(pred_cls_logits, target_classes, reduction="none")
-
-        loss_box = 0.25 * F.l1_loss(
-            pred_boxreg_deltas, matched_gt_deltas, reduction="none"
-        )
-        loss_box[matched_gt_deltas < 0] *= 0.0  
-
-        gt_centerness = fcos_make_centerness_targets(matched_gt_deltas)
+        centerness_targets = fcos_make_centerness_targets(matched_gt_deltas.reshape(B*N,-1))
 
         loss_ctr = F.binary_cross_entropy_with_logits(
-            pred_ctr_logits, gt_centerness, reduction="none"
+            pred_ctr_logits, centerness_targets.reshape(-1,1).clamp(0).to(torch.device("cuda:0")), reduction="none"
         )
-        loss_ctr[gt_centerness < 0] *= 0.0  
+
+        loss_ctr[gt_class_ids == -1] = 0
+   
+        loss_box = 0.25 * F.l1_loss(
+            pred_boxreg_deltas, matched_gt_deltas.reshape(B*N,-1).to(torch.device("cuda:0")), reduction="none"
+        )
+
+        loss_box[gt_class_ids == -1] = 0
 
         ######################################################################
         #                            END OF YOUR CODE                        #
