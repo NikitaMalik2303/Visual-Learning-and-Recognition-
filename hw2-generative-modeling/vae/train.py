@@ -43,7 +43,7 @@ def vae_loss(model, x, beta = 1):
     std = torch.exp(log_std)
     z = mu + torch.randn_like(mu)*std
 
-    kl_loss = 0.5*torch.sum(mu**2 + std**2 - 2*log_std -1, dim=1).sum(1).mean()
+    kl_loss = 0.5*torch.sum(mu**2 + std**2 - 2*log_std -1, dim=1).mean()
 
     recon_loss = F.mse_loss(model.decoder(z), x, reduction='none')
     recon_loss = recon_loss.view(recon_loss.size(0), -1).sum(1).mean()
