@@ -18,7 +18,8 @@ def ae_loss(model, x):
     ##################################################################
     # TODO 2.2: Fill in MSE loss between x and its reconstruction.
     ##################################################################
-    loss = F.mse_loss(x, model.decoder(model.encoder(x)))
+    loss = F.mse_loss(model.decoder(model.encoder(x)), x, reduction='none')
+    loss = loss.view(loss.size(0), -1).sum(1).mean()
     ##################################################################
     #                          END OF YOUR CODE                      #
     ##################################################################
@@ -39,11 +40,13 @@ def vae_loss(model, x, beta = 1):
     # (https://stats.stackexchange.com/questions/318748/deriving-the-kl-divergence-loss-for-vaes).
     ##################################################################
     mu, log_std = model.encoder(x)
-    z = mu + torch.randn_like(mu)*torch.exp(log_std)
+    std = torch.exp(log_std)
+    z = mu + torch.randn_like(mu)*std
 
-    kl_loss = 0.5*torch.sum(mu**2 + torch.exp(2*log_std) - 2*log_std -1, dim=1).mean()
+    kl_loss = 0.5*torch.sum(mu**2 + std**2 - 2*log_std -1, dim=1).sum(1).mean()
 
-    recon_loss = F.mse_loss(model.decoder(z), x)
+    recon_loss = F.mse_loss(model.decoder(z), x, reduction='none')
+    recon_loss = recon_loss.view(recon_loss.size(0), -1).sum(1).mean()
 
     total_loss = beta*kl_loss + recon_loss
     ##################################################################
