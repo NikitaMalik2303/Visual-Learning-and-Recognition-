@@ -153,8 +153,8 @@ class DiffusionModel(nn.Module):
         t_isub1 = torch.ones([batch], device=device)*tau_isub1
 
         # Step 2: Extract \alpha_{\tau_{i - 1}} and \alpha_{\tau_{i}}
-        alpha_tau_isub1 = extract(alphas_cumprod, t_i.long(), img.shape)
-        alpha_tau_i = extract(alphas_cumprod, t_isub1.long(), img.shape)
+        alpha_tau_i = extract(alphas_cumprod, t_i.long(), img.shape)
+        alpha_tau_isub1 = extract(alphas_cumprod, t_isub1.long(), img.shape)
         beta_t = (1 - alpha_tau_i / (alpha_tau_isub1))
 
         # Step 3: Compute \sigma_{\tau_{i}}
