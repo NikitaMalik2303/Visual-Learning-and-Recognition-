@@ -28,7 +28,7 @@ class UpSampleConv2D(torch.jit.ScriptModule):
         # 3. Apply convolution and return output
         ##################################################################
         b, c, h, w = x.shape
-        x = x.repeat(1, self.upscale_factor**2, 1, 1)
+        x = x.repeat(1, int(self.upscale_factor**2), 1, 1)
         x = F.pixel_shuffle(x, self.upscale_factor)
         return self.conv(x)
         ##################################################################
@@ -99,7 +99,7 @@ class ResBlockUp(torch.jit.ScriptModule):
             nn.Conv2d(input_channels, n_filters, kernel_size=kernel_size, stride =1, padding=1, bias=False), 
             nn.BatchNorm2d(n_filters, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True), 
             nn.ReLU(), 
-            UpSampleConv2D(input_channels=n_filters, n_filters=n_filters, kernel_size=kernel_size, stride=1)
+            UpSampleConv2D(input_channels=n_filters, n_filters=n_filters, kernel_size=kernel_size, padding=1)
         )
         self.upsample_residual = UpSampleConv2D(input_channels=input_channels, n_filters=n_filters, kernel_size=1)
         ##################################################################
