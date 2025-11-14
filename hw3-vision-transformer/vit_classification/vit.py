@@ -1,9 +1,10 @@
 import sys
 import torch.nn as nn
 import torch
+import os
 
-sys.path.append("../transformer_captioning") 
-from transformer_captioning import (
+sys.path.append(os.path.join(os.path.dirname(__file__), "../transformer_captioning"))
+from transformer import (
     AttentionLayer,
     MultiHeadAttentionLayer,
     PositionalEncoding,
@@ -74,7 +75,7 @@ class ViT(nn.Module):
                 - patches: a FloatTensor of shape (N, num_patches, patch_dim x patch_dim x 3) giving a minibatch of patches    
         """
 
-        patches = nn.functional.Unfold(images, kernel_size=self.patch_dim, stride=self.patch_dim)
+        patches = nn.functional.unfold(images, kernel_size=self.patch_dim, stride=self.patch_dim)
         patches = patches.transpose(1, 2)
         # TODO - Break images into a grid of patches
         # Feel free to use pytorch built-in functions to do this

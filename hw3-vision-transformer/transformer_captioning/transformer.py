@@ -92,7 +92,7 @@ class MultiHeadAttentionLayer(AttentionLayer):
             # Hint : If mask[i,j] = 0, we want softmax(QKT[i,j] + additive_mask[i,j]) to be 0
             # Think about what inputs make softmax 0.
             additive_mask = (~attn_mask)*-1e9
-            dot_product += additive_mask
+            dot_product += additive_mask.to(dot_product.device)
         
         # apply softmax, dropout, and use value
         y = F.softmax(dot_product,dim=-1)
@@ -100,7 +100,7 @@ class MultiHeadAttentionLayer(AttentionLayer):
         y = y@value #shape= (N, H, S, D//H)
 
         # concat embeddings from different heads, and project
-        y = y.transpose(1, 2).view(N, S, D)
+        y = y.transpose(1, 2).contiguous().view(N, S, D)
         output = self.head_proj(y)
         return output
 
