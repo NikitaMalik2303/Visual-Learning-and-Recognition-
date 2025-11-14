@@ -161,22 +161,36 @@ class CrossAttentionBlock(nn.Module):
 class FeedForwardBlock(nn.Module):
     def __init__(self, input_dim, num_heads, dim_feedforward=2048, dropout=0.1 ):
         super().__init__()
+        #SwiGLU Activation function 
+        self.w1 = nn.Linear(input_dim, dim_feedforward*2)
+        self.w2= nn.Linear(dim_feedforward, input_dim)
+
         # TODO: Initialize the following. 
         # MLP has the following layers : linear, relu, dropout, linear ; hidden dim of linear is given by dim_feedforward
-        self.mlp = nn.Sequential(
-            nn.Linear(input_dim, dim_feedforward), 
-            nn.ReLU(), 
-            nn.Dropout(dropout), 
-            nn.Linear(dim_feedforward, input_dim)
-        )
+        # self.mlp = nn.Sequential(
+        #     nn.Linear(input_dim, dim_feedforward), 
+        #     nn.ReLU(), 
+        #     nn.Dropout(dropout), 
+        #     nn.Linear(dim_feedforward, input_dim)
+        # )
         self.dropout = nn.Dropout(dropout)
         self.norm = nn.LayerNorm(input_dim)
+        self.activation= nn.SiLU()
        
 
     def forward(self, seq):
          ############# TODO - MLP on the sequence. Add dropout to mlp layer output.
         # Then add a residual connection to the original input, and finally apply normalization. #############################
-        y = self.mlp(seq)
+        # y = self.mlp(seq)
+        # y = self.dropout(y)
+        # out = seq + y
+        # out = self.norm(out)
+
+        x= self.w1(seq)
+        x_main, x_gate= x.chunk(2, dim=-1)
+        y = self.activation(x_gate)*x_main
+
+        y= self.w2(y)
         y = self.dropout(y)
         out = seq + y
         out = self.norm(out)
